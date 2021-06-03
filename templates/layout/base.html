@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}{% endblock %}</title>
+    <base href="/" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.js"
+      defer
+    ></script>
+    <style>
+      [x-cloak] {
+        display: none;
+      }
+      .trend > li {
+        transition: 0.3s;
+      }
+      .trend:hover > li {
+        background: rgba(0, 0, 0, 0.03);
+      }
+    </style>
+    <script>
+      const MAX_TWEET_LENGTH = 280;
+      const MONTH_NAMES = [
+        "Ocak",
+        "Şub",
+        "Mar",
+        "Nis",
+        "May",
+        "Haz",
+        "Tem",
+        "Agu",
+        "Eyl",
+        "Eki",
+        "Kas",
+        "Ara",
+      ];
+
+      function app() {
+        return {
+          tweetText: "",
+          follow(id) {
+            fetch("follow", {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
+              body: `id=${id}`,
+            }).then(() => {
+              window.location.reload();
+            });
+          },
+          unfollow(id) {
+            fetch("unfollow", {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
+              body: `id=${id}`,
+            }).then(() => {
+              window.location.reload();
+            });
+          },
+          retweet(id, undo = 0) {
+            fetch(undo ? "undo_retweet" : "retweet", {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
+              body: `id=${id}`,
+            }).then(() => {
+              window.location.reload();
+            });
+          },
+          likeTweet(id, unlike = 0) {
+            fetch(unlike ? "unlike" : "like", {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
+              body: `id=${id}`,
+            }).then(() => {
+              window.location.reload();
+            });
+          },
+          charactersRemaining() {
+            return MAX_TWEET_LENGTH - this.tweetText.length;
+          },
+          tweetIsOutOfRange() {
+            return (
+              MAX_TWEET_LENGTH - this.tweetText.length == MAX_TWEET_LENGTH ||
+              MAX_TWEET_LENGTH - this.tweetText.length < 0
+            );
+          },
+          generateAvatarFromName(name) {
+            return (
+              name.split(" ")[0].slice(0, 1) +
+              "" +
+              name.split(" ")[1].slice(0, 1)
+            );
+          },
+          formatDate(date) {
+            if (!date) {
+              return null;
+            }
+            const DAY_IN_MS = 86400000; // 24 * 60 * 60 * 1000
+            const today = new Date();
+            const yesterday = new Date(today - DAY_IN_MS);
+            const d = new Date(date);
+            const day = d.getDate();
+            const month = MONTH_NAMES[d.getMonth()];
+            const seconds = Math.round((today - d) / 1000);
+            const minutes = Math.round(seconds / 60);
+            const hours = Math.round(minutes / 60);
+            const isToday = today.toDateString() === d.toDateString();
+            if (isToday) {
+              if (seconds < 5) {
+                return "şimdi";
+              } else if (seconds < 60) {
+                return `${seconds} saniye`;
+              } else if (minutes < 60) {
+                return `${minutes} dakika`;
+              } else {
+                return `${hours} saat`;
+              }
+            } else {
+              return month + " " + day;
+            }
+          },
+        };
+      }
+    </script>
+  </head>
+  <body class="antialiased sans-serif bg-gray-200">
+    <div x-data="app()" x-cloak>
+      {% if current_user.is_authenticated %}
+      <div class="bg-white shadow">
+        <div class="container mx-auto px-4 py-2 md:py-3">
+          <div class="flex justify-between items-center">
+            <div class="text-lg md:text-xl font-bold text-gray-800">Bitter</div>
+            <div class="relative" x-data="{ open: false }" x-cloak>
+              <div
+                @click="open = !open"
+                class="
+                  cursor-pointer
+                  font-bold
+                  w-10
+                  h-10
+                  bg-blue-200
+                  text-blue-600
+                  flex
+                  items-center
+                  justify-center
+                  rounded-full
+                "
+              >
+                {{ current_user.username[0].upper() }}
+              </div>
+              <div
+                x-show.transition="open"
+                @click.away="open = false"
+                class="
+                  absolute
+                  top-0
+                  mt-12
+                  right-0
+                  w-48
+                  bg-white
+                  py-2
+                  shadow-md
+                  border border-gray-100
+                  rounded-lg
+                  z-40
+                "
+              >
+                <a
+                  href="#"
+                  class="
+                    block
+                    px-4
+                    py-2
+                    text-gray-600
+                    hover:bg-gray-100
+                    hover:text-blue-600
+                  "
+                  >Edit Profile</a
+                >
+                <a
+                  href="#"
+                  class="
+                    block
+                    px-4
+                    py-2
+                    text-gray-600
+                    hover:bg-gray-100
+                    hover:text-blue-600
+                  "
+                  >Account Settings</a
+                >
+                <a
+                  href="#"
+                  class="
+                    block
+                    px-4
+                    py-2
+                    text-gray-600
+                    hover:bg-gray-100
+                    hover:text-blue-600
+                  "
+                  >Sign Out</a
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %} {% block content %}{% endblock %}
+    </div>
+  </body>
+</html>

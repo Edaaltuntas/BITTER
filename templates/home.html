@@ -1,0 +1,314 @@
+{% extends "layout/base.html" %} {% block content %}
+<div class="container mx-auto px-4 py-10">
+  <div class="md:flex -mx-4">
+    {% include "layout/left_side.html" %}
+    <div class="md:w-2/4 px-4">
+      <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <div class="flex w-full">
+          <div class="flex-shrink-0 mr-5">
+            <div
+              class="
+                cursor-pointer
+                font-bold
+                w-12
+                h-12
+                bg-gray-300
+                flex
+                items-center
+                justify-center
+                rounded-full
+              "
+            >
+              <span class="uppercase text-gray-700"
+                >{{ current_user.username[0] }}</span
+              >
+            </div>
+          </div>
+          <div class="flex-1">
+            <form action="/bit" method="POST">
+              <textarea
+                x-model="tweetText"
+                class="
+                  mb-2
+                  bg-gray-200
+                  focus:outline-none
+                  focus:shadow-outline
+                  focus:bg-white
+                  border border-transparent
+                  rounded-lg
+                  py-2
+                  px-4
+                  block
+                  w-full
+                  appearance-none
+                  leading-normal
+                  placeholder-gray-700
+                "
+                :class="{'border border-red-500': tweetIsOutOfRange() && tweetText.length != 0 }"
+                rows="3"
+                placeholder="What's happening..."
+                name="content"
+              ></textarea>
+
+              <div class="flex justify-between items-center">
+                <div class="ml-auto">
+                  <span
+                    :class="{ 'text-red-600': charactersRemaining() <= 20 && charactersRemaining() > 10, 'text-red-400': charactersRemaining() <= 10 }"
+                    class="mr-3 text-sm text-gray-600"
+                    x-text="charactersRemaining()"
+                  ></span>
+
+                  <button
+                    type="submit"
+                    :disabled="(tweetText == '') || tweetIsOutOfRange()"
+                    :class="{'cursor-not-allowed opacity-50': (tweetText == '') || tweetIsOutOfRange()}"
+                    class="
+                      w-32
+                      focus:outline-none
+                      border border-transparent
+                      py-2
+                      px-5
+                      rounded-lg
+                      shadow
+                      text-center text-white
+                      bg-blue-500
+                      hover:bg-blue-600
+                      font-medium
+                    "
+                  >
+                    Tweet
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <ul class="bg-white rounded-lg shadow mb-8">
+        {% for tweet in Tweets %}
+        <div>
+          <li
+            class="
+              px-6
+              py-5
+              {%
+              if
+              not
+              loop.last
+              %}border-b
+              border-gray-200{%
+              endif
+              %}
+            "
+          >
+            <div class="flex w-full">
+              <div class="flex-shrink-0 mr-5">
+                <div
+                  class="
+                    cursor-pointer
+                    font-bold
+                    w-12
+                    h-12
+                    bg-gray-300
+                    flex
+                    items-center
+                    justify-center
+                    rounded-full
+                  "
+                >
+                  <span class="uppercase text-gray-700"
+                    >{{ tweet.user.username[0] }}</span
+                  >
+                </div>
+              </div>
+              <div class="flex-1">
+                <div>
+                  <strong class="font-bold text-gray-800 mr-2"
+                    >{{ tweet.user.name }}</strong
+                  >
+                  <span class="text-gray-600"
+                    ><a href="/user/{{ tweet.user.username }}"
+                      >@{{ tweet.user.username }}</a
+                    ></span
+                  >
+                  <span class="mx-1 text-gray-500">&bull;</span>
+                  <span class="text-gray-600"
+                    ><a
+                      href="/{{ tweet.user.username }}/{{ tweet.id }}"
+                      x-text="formatDate('{{ tweet.created_at }}')"
+                    ></a
+                  ></span>
+                </div>
+
+                <div class="mb-4">
+                  <p class="text-gray-700">{{ tweet.content }}</p>
+                </div>
+
+                <div class="flex items-center w-full">
+                  <div class="w-1/4 flex items-center">
+                    <div
+                      @click="retweet('{{ tweet.id }}', {{ tweet.retweets.filter_by(id=current_user.id).count()}})"
+                      class="
+                        cursor-pointer
+                        hover:bg-gray-200
+                        inline-flex
+                        p-2
+                        rounded-full
+                        duration-200
+                        transition-all
+                        ease-in-out
+                      "
+                    >
+                      <svg
+                        class="
+                          h-6
+                          w-6{%
+                          if
+                          current_user.is_authenticated
+                          and
+                          tweet.retweets.filter_by(id=current_user.id).count()
+                          %}text-green-500{%
+                          else
+                          %}text-gray-500{%
+                          endif
+                          %}
+                        "
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                        />
+                      </svg>
+                    </div>
+                    <div
+                      class="
+                        ml-1
+                        leading-none
+                        inline-flex
+                        {%
+                        if
+                        current_user.is_authenticated
+                        and
+                        tweet.retweets.filter_by(id=current_user.id).count()
+                        %}text-green-600{%
+                        else
+                        %}text-gray-600{%
+                        endif
+                        %}
+                      "
+                    >
+                      {{ tweet.retweets.count() }}
+                    </div>
+                  </div>
+
+                  <div class="w-1/4 flex items-center">
+                    <div
+                      @click="likeTweet('{{ tweet.id }}', {{ tweet.likes.filter_by(id=current_user.id).count() }})"
+                      class="
+                        cursor-pointer
+                        hover:bg-gray-200
+                        inline-flex
+                        p-2
+                        rounded-full
+                        duration-200
+                        transition-all
+                        ease-in-out
+                      "
+                    >
+                      {% if current_user.is_authenticated and
+                      tweet.likes.filter_by(id=current_user.id).count() %}
+                      <svg
+                        class="h-6 w-6 text-red-500"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                          clip-rule="evenodd"
+                        />
+                      </svg>
+                      {% else %}
+                      <svg
+                        class="h-6 w-6 text-gray-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                        />
+                      </svg>
+                      {% endif %}
+                    </div>
+                    <div
+                      class="
+                        ml-1
+                        text-gray-600
+                        leading-none
+                        inline-flex{%
+                        if
+                        current_user.is_authenticated
+                        and
+                        tweet.likes.filter_by(id=current_user.id).count()
+                        %}text-red-600{%
+                        else
+                        %}text-gray-600{%
+                        endif
+                        %}
+                      "
+                    >
+                      {{ tweet.likes.count() }}
+                    </div>
+                  </div>
+
+                  <div class="w-1/4 flex items-center">
+                    <div
+                      class="
+                        cursor-pointer
+                        hover:bg-gray-200
+                        inline-flex
+                        p-2
+                        rounded-full
+                        duration-200
+                        transition-all
+                        ease-in-out
+                      "
+                    >
+                      <svg
+                        class="h-6 w-6 text-gray-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+        </div>
+        {% endfor %}
+      </ul>
+      
+    </div>
+    {% include "layout/right_side.html" %}
+  </div>
+</div>
+{% endblock %}

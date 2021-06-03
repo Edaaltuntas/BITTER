@@ -1,0 +1,173 @@
+<div class="md:w-1/3 px-4">
+  <ul class="bg-white rounded-lg shadow mb-8">
+    <li class="px-6 py-3 border-b border-gray-200">
+      <div class="font-bold text-gray-800">Trends</div>
+    </li>
+    {% for tag in Hashtag_Query.query.all() %}
+    <a href="/hashtag/{{ tag.tag }}" class="trend">
+      <li
+        class="
+          px-6
+          py-3
+          {%
+          if
+          not
+          loop.last
+          %}border-b
+          border-gray-200{%
+          endif
+          %}
+        "
+      >
+        <div class="flex w-full">
+          <div class="flex-1 flex flex-row justify-between items-center">
+            <div>
+              <p class="text-gray-700">#{{ tag.tag }}</p>
+              <p class="text-gray-500">{{ tag.tweets.count() }} tweet</p>
+            </div>
+          </div>
+        </div>
+      </li>
+    </a>
+    {% endfor %}
+  </ul>
+
+  <ul class="bg-white rounded-lg shadow mb-8">
+    <li class="px-6 py-3 border-b border-gray-200">
+      <div class="font-bold text-gray-800">Who to follow</div>
+    </li>
+    {% for user in
+    User_Query.query.filter(User_Query.username!=current_user.username).all() | reject('in', current_user.following.all()) %}
+    <li
+      class="
+        px-6
+        py-3
+        {%
+        if
+        not
+        loop.last
+        %}border-b
+        border-gray-200{%
+        endif
+        %}
+      "
+    >
+      <div class="flex w-full">
+        <div class="flex-shrink-0 mr-5">
+          <div
+            class="
+              cursor-pointer
+              font-bold
+              w-12
+              h-12
+              bg-gray-300
+              flex
+              items-center
+              justify-center
+              rounded-full
+            "
+          >
+            <span class="uppercase text-gray-700">{{ user.username[0] }}</span>
+          </div>
+        </div>
+        <div class="flex-1 flex flex-row justify-between items-center">
+          <div>
+            <p class="text-gray-700">{{ user.name }}</p>
+            <p class="text-gray-500">
+              <a href="/user/{{ user.username }}">@{{ user.username }}</a>
+            </p>
+          </div>
+          <div>
+            <button
+              @click="follow({{ user.id }})"
+              class="
+                focus:outline-none
+                py-1
+                px-4
+                rounded-full
+                shadow-sm
+                text-center text-blue-600
+                bg-white
+                hover:bg-blue-100
+                font-medium
+                border border-blue-200
+              "
+            >
+              Follow
+            </button>
+          </div>
+        </div>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <ul class="bg-white rounded-lg shadow mb-8">
+    <li class="px-6 py-3 border-b border-gray-200">
+      <div class="font-bold text-gray-800">Following</div>
+    </li>
+    {% for user in current_user.following %}
+    <li
+      class="
+        px-6
+        py-3
+        {%
+        if
+        not
+        loop.last
+        %}border-b
+        border-gray-200{%
+        endif
+        %}
+      "
+    >
+      <div class="flex w-full">
+        <div class="flex-shrink-0 mr-5">
+          <div
+            class="
+              cursor-pointer
+              font-bold
+              w-12
+              h-12
+              bg-gray-300
+              flex
+              items-center
+              justify-center
+              rounded-full
+            "
+          >
+            <span class="uppercase text-gray-700">{{ user.username[0] }}</span>
+          </div>
+        </div>
+        <div class="flex-1 flex flex-row justify-between items-center">
+          <div>
+            <p class="text-gray-700">{{ user.name }}</p>
+            <p class="text-gray-500">
+              <a href="/user/{{ user.username }}">@{{ user.username }}</a>
+            </p>
+          </div>
+          <div>
+            <button
+              @click="unfollow({{ user.id }})"
+              class="
+                focus:outline-none
+                py-1
+                px-4
+                rounded-full
+                shadow-sm
+                text-center text-blue-600
+                bg-white
+                hover:bg-blue-100
+                font-medium
+                border border-blue-200
+              "
+            >
+              Unfollow
+            </button>
+          </div>
+        </div>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+</div>

@@ -1,0 +1,275 @@
+{% extends "layout/base.html" %} {% block content %}
+<div class="container mx-auto px-4 py-10">
+  <div class="md:flex -mx-4">
+    {% include "layout/left_side.html" %}
+    <div class="md:w-2/4 px-4">
+      <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <div class="flex w-full">
+          <div class="flex-1">
+            {% if current_user.is_authenticated and Tweet.user.id !=
+            current_user.id %} {% if
+            Tweet.user.followers.filter_by(id=current_user.id).count() %}
+            <form action="/unfollow" method="POST">
+              <input type="hidden" name="id" value="{{ Tweet.user.id }}" />
+              <button
+                class="
+                  bg-transparent
+                  hover:bg-blue-500
+                  text-blue-700
+                  font-semibold
+                  hover:text-white
+                  py-2
+                  px-4
+                  border border-blue-500
+                  hover:border-transparent
+                  rounded
+                "
+              >
+                Takipten Çık
+              </button>
+            </form>
+            {% else %}
+            <form action="/follow" method="POST">
+              <input type="hidden" name="id" value="{{ Tweet.user.id }}" />
+              <button
+                class="
+                  bg-transparent
+                  hover:bg-blue-500
+                  text-blue-700
+                  font-semibold
+                  hover:text-white
+                  py-2
+                  px-4
+                  border border-blue-500
+                  hover:border-transparent
+                  rounded
+                "
+              >
+                Takip Et
+              </button>
+            </form>
+            {% endif %} {% endif %}
+            <h1>{{ User.name }}</h1>
+            <h2>@{{ Tweet.user.username }}</h2>
+            <p>
+              {{ Tweet.user.created_at.strftime('%B %Y') }} tarihinde aramıza
+              katıldı
+            </p>
+            <p>
+              {{ Tweet.user.following.count() }} Following {{
+              Tweet.user.followers.count() }} Followers
+            </p>
+            {% if current_user.is_authenticated and Tweet.user.id !=
+            current_user.id %} {% if
+            current_user.followers.filter_by(id=Tweet.user.id).count() %}
+            <p>Seni takip ediyor</p>
+            {% endif %} {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <ul class="bg-white rounded-lg shadow mb-8">
+        <div>
+          <li class="px-6 py-5">
+            <div class="flex w-full">
+              <div class="flex-shrink-0 mr-5">
+                <div
+                  class="
+                    cursor-pointer
+                    font-bold
+                    w-12
+                    h-12
+                    bg-gray-300
+                    flex
+                    items-center
+                    justify-center
+                    rounded-full
+                  "
+                >
+                  <span class="uppercase text-gray-700"
+                    >{{ Tweet.user.username[0] }}</span
+                  >
+                </div>
+              </div>
+              <div class="flex-1">
+                <div>
+                  <strong class="font-bold text-gray-800 mr-2"
+                    >{{ Tweet.user.username }}</strong
+                  >
+                  <span class="text-gray-600">@{{ Tweet.user.username }}</span>
+                  <span class="mx-1 text-gray-500">&bull;</span>
+                  <span
+                    class="text-gray-600"
+                    x-text="formatDate('{{ Tweet.created_at }}')"
+                  ></span>
+                </div>
+
+                <div class="mb-4">
+                  <p class="text-gray-700">{{ Tweet.content }}</p>
+                </div>
+
+                <div class="flex items-center w-full">
+                  <div class="w-1/4 flex items-center">
+                    <div
+                      @click="retweet('{{ Tweet.id }}', {{ Tweet.retweets.filter_by(id=current_user.id).count()}})"
+                      class="
+                        cursor-pointer
+                        hover:bg-gray-200
+                        inline-flex
+                        p-2
+                        rounded-full
+                        duration-200
+                        transition-all
+                        ease-in-out
+                      "
+                    >
+                      <svg
+                        class="
+                          h-6
+                          w-6{%
+                          if
+                          current_user.is_authenticated
+                          and
+                          Tweet.retweets.filter_by(id=current_user.id).count()
+                          %}text-green-500{%
+                          else
+                          %}text-gray-500{%
+                          endif
+                          %}
+                        "
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                        />
+                      </svg>
+                    </div>
+                    <div
+                      class="
+                        ml-1
+                        leading-none
+                        inline-flex
+                        {%
+                        if
+                        current_user.is_authenticated
+                        and
+                        Tweet.retweets.filter_by(id=current_user.id).count()
+                        %}text-green-600{%
+                        else
+                        %}text-gray-600{%
+                        endif
+                        %}
+                      "
+                    >
+                      {{ Tweet.retweets.count() }}
+                    </div>
+                  </div>
+
+                  <div class="w-1/4 flex items-center">
+                    <div
+                      @click="likeTweet('{{ Tweet.id }}', {{ Tweet.likes.filter_by(id=current_user.id).count() }})"
+                      class="
+                        cursor-pointer
+                        hover:bg-gray-200
+                        inline-flex
+                        p-2
+                        rounded-full
+                        duration-200
+                        transition-all
+                        ease-in-out
+                      "
+                    >
+                      {% if current_user.is_authenticated and
+                      Tweet.likes.filter_by(id=current_user.id).count() %}
+                      <svg
+                        class="h-6 w-6 text-red-500"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                          clip-rule="evenodd"
+                        />
+                      </svg>
+                      {% else %}
+                      <svg
+                        class="h-6 w-6 text-gray-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                        />
+                      </svg>
+                      {% endif %}
+                    </div>
+                    <div
+                      class="
+                        ml-1
+                        text-gray-600
+                        leading-none
+                        inline-flex{%
+                        if
+                        current_user.is_authenticated
+                        and
+                        Tweet.likes.filter_by(id=current_user.id).count()
+                        %}text-red-600{%
+                        else
+                        %}text-gray-600{%
+                        endif
+                        %}
+                      "
+                    >
+                      {{ Tweet.likes.count() }}
+                    </div>
+                  </div>
+
+                  <div class="w-1/4 flex items-center">
+                    <div
+                      class="
+                        cursor-pointer
+                        hover:bg-gray-200
+                        inline-flex
+                        p-2
+                        rounded-full
+                        duration-200
+                        transition-all
+                        ease-in-out
+                      "
+                    >
+                      <svg
+                        class="h-6 w-6 text-gray-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+        </div>
+      </ul>
+    </div>
+    {% include "layout/right_side.html" %}
+  </div>
+</div>
+{% endblock %}
